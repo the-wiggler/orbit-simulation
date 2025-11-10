@@ -21,6 +21,7 @@ extern TTF_Font* g_font;
 typedef struct {
     double mass;
     int radius;
+    double r_from_body;
     double pos_x;
     double pos_y;
     double vel_x;
@@ -47,5 +48,8 @@ int calculateVisualRadius(double mass);
 
 bool isMouseInRect(int mouse_x, int mouse_y, int rect_x, int rect_y, int rect_w, int rect_h);
 void drawSpeedControl(SDL_Renderer* renderer, speed_control_t* control, double multiplier);
+void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control_t* speed_control, double* TIME_STEP);
+
+void drawStatsBox(SDL_Renderer* renderer, body_properties_t b1, body_properties_t b2);
 
 #endif

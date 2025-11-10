@@ -9,7 +9,8 @@ void calculateForces(body_properties_t *b, body_properties_t b2) {
     // calculate the distance between the two bodies
     double delta_pos_x = b2.pos_x - b->pos_x;
     double delta_pos_y = b2.pos_y - b->pos_y;
-    double r = sqrt(delta_pos_x * delta_pos_x + delta_pos_y * delta_pos_y);
+    b->r_from_body = sqrt(delta_pos_x * delta_pos_x + delta_pos_y * delta_pos_y);
+    double r = b->r_from_body;
 
     // calculate the force that b2 applies on b due to gravitation (F = (GMm) / r)
     double total_force = (G * b->mass * b2.mass) / (r * r);
@@ -90,20 +91,12 @@ void drawScaleBar(SDL_Renderer* renderer, double meters_per_pixel, int window_wi
     }
     
     // Render text
-    if (g_font) {
-        SDL_Surface* text_surface = TTF_RenderText_Blended(g_font, scale_text, 0, 
-                                                           (SDL_Color){255, 255, 255, 255});
-        if (text_surface) {
-            SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
-            if (text_texture) {
-                SDL_FRect text_rect = {bar_x, bar_y - text_surface->h - 5, 
-                                      text_surface->w, text_surface->h};
-                SDL_RenderTexture(renderer, text_texture, NULL, &text_rect);
-                SDL_DestroyTexture(text_texture);
-            }
-            SDL_DestroySurface(text_surface);
-        }
-    }
+    SDL_Surface* text_surface = TTF_RenderText_Blended(g_font, scale_text, 0, (SDL_Color){255, 255, 255, 255});
+    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+    SDL_FRect text_rect = {bar_x, bar_y - text_surface->h - 5, text_surface->w, text_surface->h};
+    SDL_RenderTexture(renderer, text_texture, NULL, &text_rect);
+    SDL_DestroyTexture(text_texture);
+    SDL_DestroySurface(text_surface);
 }
 
 
@@ -125,12 +118,8 @@ bool isMouseInRect(int mouse_x, int mouse_y, int rect_x, int rect_y, int rect_w,
 }
 
 void drawSpeedControl(SDL_Renderer* renderer, speed_control_t* control, double multiplier) {
-    // background color that highlights if hovered
-    if (control->is_hovered) {
-        SDL_SetRenderDrawColor(renderer, 80, 80, 120, 255);
-    } else {
-        SDL_SetRenderDrawColor(renderer, 50, 50, 80, 255);
-    }
+    // background color
+    SDL_SetRenderDrawColor(renderer, 80, 80, 120, 255);
     
     SDL_FRect bg_rect = {
         (float)control->x, 
@@ -145,26 +134,79 @@ void drawSpeedControl(SDL_Renderer* renderer, speed_control_t* control, double m
     SDL_RenderRect(renderer, &bg_rect);
     
     // text showing current speed
-    if (g_font != NULL) {
-        char speed_text[64];
-        snprintf(speed_text, sizeof(speed_text), "Speed: %.2fx", multiplier);
+    char speed_text[64];
+    snprintf(speed_text, sizeof(speed_text), "Speed: %.2fs", multiplier);
+    
+    SDL_Color text_color = {255, 255, 255, 255};
+    SDL_Surface* text_surface = TTF_RenderText_Solid(g_font, speed_text, 0, text_color); 
+    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+    
+    SDL_FRect text_rect = {
+        (float)(control->x + 10),
+        (float)(control->y + 10),
+        (float)text_surface->w,
+        (float)text_surface->h
+    };
+    
+    SDL_RenderTexture(renderer, text_texture, NULL, &text_rect);
+    SDL_DestroyTexture(text_texture);
+    SDL_DestroySurface(text_surface);
+
+}
+
+// the event handling code... checks if events are happening for input and does a task based on that input
+void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control_t* speed_control, double* TIME_STEP) {
+    while (SDL_PollEvent(event)) {
+        if (event->type == SDL_EVENT_QUIT) {
+            *loop_running_condition = false;
+        }
         
-        SDL_Color text_color = {255, 255, 255, 255};
-        SDL_Surface* text_surface = TTF_RenderText_Solid(g_font, speed_text, 0, text_color);
+        else if (event->type == SDL_EVENT_MOUSE_MOTION) {
+            int mouse_x = (int)event->motion.x;
+            int mouse_y = (int)event->motion.y;
+            
+            speed_control->is_hovered = isMouseInRect(
+                mouse_x, mouse_y,
+                speed_control->x, speed_control->y,
+                speed_control->width, speed_control->height
+            );
+        }
         
-        if (text_surface) {
-            SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+        else if (event->type == SDL_EVENT_MOUSE_WHEEL) {
+            int mouse_x = (int)event->wheel.mouse_x;
+            int mouse_y = (int)event->wheel.mouse_y;
             
-            SDL_FRect text_rect = {
-                (float)(control->x + 10),
-                (float)(control->y + 10),
-                (float)text_surface->w,
-                (float)text_surface->h
-            };
-            
-            SDL_RenderTexture(renderer, text_texture, NULL, &text_rect);
-            SDL_DestroyTexture(text_texture);
-            SDL_DestroySurface(text_surface);
+            if (isMouseInRect(mouse_x, mouse_y,
+                speed_control->x, speed_control->y,
+                speed_control->width, speed_control->height)) {
+                
+                if (event->wheel.y > 0) {
+                    *TIME_STEP *= 1.05;
+                } else if (event->wheel.y < 0) {
+                    *TIME_STEP /= 1.05;
+                }
+            }
         }
     }
+}
+
+
+void drawStatsBox(SDL_Renderer* renderer, body_properties_t b1, body_properties_t b2) {
+
+    // all calculations for things to go inside the box:
+    float distance = b1.r_from_body;
+
+    // draw the box
+    char distance_text[32];
+    snprintf(distance_text, sizeof(distance_text), "Distance: %.2f km", distance / 1000.0);
+    char body1_speed[64];
+    
+    // render text
+    SDL_Color text_color = {255, 255, 255, 255};
+    SDL_Surface* text_surface = TTF_RenderText_Solid(g_font, distance_text, 0, text_color);
+    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+    SDL_FRect text_rect = {20, 70, (float)text_surface->w, (float)text_surface->h};
+    SDL_RenderTexture(renderer, text_texture, NULL, &text_rect);
+    SDL_DestroyTexture(text_texture);
+    SDL_DestroySurface(text_surface);
 }

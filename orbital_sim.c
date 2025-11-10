@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     body1.pos_y = 0.0f;
     body2.pos_y = -25000.0f;
     body1.vel_x = 0.0f;
-    body2.vel_x = -0.05f;
+    body2.vel_x = -0.3f;
 
     body1.radius = calculateVisualRadius(body1.mass);
     body2.radius = calculateVisualRadius(body2.mass);
@@ -75,44 +75,7 @@ int main(int argc, char* argv[]) {
     while (sim_running) {
         // checks inputs into the window
         SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                sim_running = false;
-            }
-            
-            // track mouse motion for hover detection
-            else if (event.type == SDL_EVENT_MOUSE_MOTION) {
-                int mouse_x = (int)event.motion.x;
-                int mouse_y = (int)event.motion.y;
-                
-                // check if hovering over speed control
-                speed_control.is_hovered = isMouseInRect(
-                    mouse_x, mouse_y,
-                    speed_control.x, speed_control.y,
-                    speed_control.width, speed_control.height
-                );
-            }
-            
-            // handle mouse wheel scrolling
-            else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
-                // get current mouse position
-                int mouse_x = (int)event.wheel.mouse_x;
-                int mouse_y = (int)event.wheel.mouse_y;
-                
-                // check if mouse is over speed control
-                if (isMouseInRect(mouse_x, mouse_y,
-                                speed_control.x, speed_control.y,
-                                speed_control.width, speed_control.height)) {
-                    
-                    // scroll up increases speed, scroll down decreases
-                    if (event.wheel.y > 0) {
-                        TIME_STEP *= 1.05; // Increase by 20%
-                    } else if (event.wheel.y < 0) {
-                        TIME_STEP /= 1.05; // Decrease by 20%
-                    }
-                }
-            }            
-        }
+        runEventCheck(&event, &sim_running, &speed_control, &TIME_STEP);
 
         // clears previous frame from the screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -140,7 +103,10 @@ int main(int argc, char* argv[]) {
         drawScaleBar(renderer, METERS_PER_PIXEL, WINDOW_SIZE_X, WINDOW_SIZE_Y);
 
         // draw speed control box
-    drawSpeedControl(renderer, &speed_control, TIME_STEP);
+        drawSpeedControl(renderer, &speed_control, TIME_STEP);
+
+        // draw the stats info box
+        drawStatsBox(renderer, body1, body2);
 
         // present the renderer to the screen
         SDL_RenderPresent(renderer);
