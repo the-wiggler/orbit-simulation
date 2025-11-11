@@ -190,7 +190,7 @@ void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control
     }
 }
 
-
+// the stats box that shows stats yay
 void drawStatsBox(SDL_Renderer* renderer, body_properties_t b1, body_properties_t b2) {
 
     // all calculations for things to go inside the box:
@@ -199,7 +199,6 @@ void drawStatsBox(SDL_Renderer* renderer, body_properties_t b1, body_properties_
     // draw the box
     char distance_text[32];
     snprintf(distance_text, sizeof(distance_text), "Distance: %.2f km", distance / 1000.0);
-    char body1_speed[64];
     
     // render text
     SDL_Color text_color = {255, 255, 255, 255};
