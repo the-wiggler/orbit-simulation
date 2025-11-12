@@ -135,7 +135,7 @@ void drawSpeedControl(SDL_Renderer* renderer, speed_control_t* control, double m
     
     // text showing current speed
     char speed_text[64];
-    snprintf(speed_text, sizeof(speed_text), "Speed: %.2fs", multiplier);
+    snprintf(speed_text, sizeof(speed_text), "Speed: %.2f s/frame", multiplier);
     
     SDL_Color text_color = {255, 255, 255, 255};
     SDL_Surface* text_surface = TTF_RenderText_Solid(g_font, speed_text, 0, text_color); 

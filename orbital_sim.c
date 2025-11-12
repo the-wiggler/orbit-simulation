@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -25,17 +26,19 @@ speed_control_t speed_control = {10, 10, 150, 40, false};
 double speed_multiplier = 1.0; // multiplier for TIME_STEP
 
 // SDL window sizing numbers
-const int WINDOW_SIZE_X         = 1000;
-const int WINDOW_SIZE_Y         = 1000;
+const int WINDOW_SIZE_X         = 1500;
+const int WINDOW_SIZE_Y         = 1500;
 const int ORIGIN_X              = WINDOW_SIZE_X / 2;
 const int ORIGIN_Y              = WINDOW_SIZE_Y / 2;
 const double METERS_PER_PIXEL   = 100; // 1m in space will equal x number of pixels on screen
+const int FONT_SIZE             = WINDOW_SIZE_Y / (WINDOW_SIZE_X * 0.05);
 
 TTF_Font* g_font = NULL;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// UNIVERSAL VARIABLES
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// holds the information on the bodies
+int num_bodies = 2;
+body_properties_t *global_bodies = NULL;
+
 body_properties_t body1 = {0};
 body_properties_t body2 = {0};
 
@@ -53,25 +56,28 @@ int main(int argc, char* argv[]) {
     SDL_RenderClear(renderer);
     // SDL ttf font stuff
     TTF_Init();
-    g_font = TTF_OpenFont("CascadiaCode.ttf", 14);
+    g_font = TTF_OpenFont("CascadiaCode.ttf", FONT_SIZE);
 
     // set to false to stop the sim program
     bool sim_running = true;
 
-    // initial properties of the bodies
-    body1.mass = 50000000000000.0f;
-    body2.mass = 500000000000.0f;
-    body1.pos_y = 0.0f;
-    body2.pos_y = -25000.0f;
-    body1.vel_x = 0.0f;
-    body2.vel_x = -0.3f;
+    global_bodies = (body_properties_t *)malloc(num_bodies * sizeof(body_properties_t));
 
-    body1.radius = calculateVisualRadius(body1.mass);
-    body2.radius = calculateVisualRadius(body2.mass);
+    // initial properties of the bodies
+    global_bodies[0].mass = 50000000000000.0f;
+    global_bodies[0].pos_y = 0.0f;
+    global_bodies[0].vel_x = 0.0f;
+    global_bodies[0].radius = calculateVisualRadius(global_bodies[0].mass);
+
+    global_bodies[1].mass = 500000000000.0f;
+    global_bodies[1].pos_y = -25000.0f;
+    global_bodies[1].vel_x = -0.3f;
+    global_bodies[1].radius = calculateVisualRadius(global_bodies[1].mass);
 
     ////////////////////////////////////////////////////////
     // simulation loop                                    //
     ////////////////////////////////////////////////////////
+
     while (sim_running) {
         // checks inputs into the window
         SDL_Event event;
@@ -81,23 +87,30 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // calculate the forces that each body applies on the other
-        calculateForces(&body1, body2); // finds the force body 2 applies on body 1
-        calculateForces(&body2, body1); // finds the force body 1 applies on body 2
+        // color for drawing bodies
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        
+        ////////////////////////////////////////////////////
+        // START OF SIMULATION LOGIC                      //
+        ////////////////////////////////////////////////////
 
-        // update the velocity and position of both bodies based on the calculated force
-        updateMotion(&body1, TIME_STEP);
-        updateMotion(&body2, TIME_STEP);
-
-        // map position data to pixel data on the screen
-        transformCoordinates(&body1);
-        transformCoordinates(&body2);
-
-        // set the renderer color and draw the bodies as circles to the renderer
-        SDL_SetRenderDrawColor(renderer, 91, 161, 230, 255);
-        SDL_RenderFillCircle(renderer, body1.pixel_coordinates_x, body1.pixel_coordinates_y, body1.radius);
-        SDL_SetRenderDrawColor(renderer, 230, 166, 91, 255);
-        SDL_RenderFillCircle(renderer, body2.pixel_coordinates_x, body2.pixel_coordinates_y, body2.radius);
+        // calculate forces between all body pairs
+        for (int i = 0; i < num_bodies; i++) {
+            for (int j = 0; j < num_bodies; j++) {
+                if (i != j) {
+                    calculateForces(&global_bodies[i], global_bodies[j]);
+                }
+            }
+        }
+        
+        // update the motion for each body and draw
+        for (int i = 0; i < num_bodies; i++) {
+            updateMotion(&global_bodies[i], TIME_STEP);
+            transformCoordinates(&global_bodies[i]);
+            SDL_RenderFillCircle(renderer, global_bodies[i].pixel_coordinates_x,
+                            global_bodies[i].pixel_coordinates_y, 
+                            global_bodies[i].radius);
+    }
 
         // draw scale reference bar
         drawScaleBar(renderer, METERS_PER_PIXEL, WINDOW_SIZE_X, WINDOW_SIZE_Y);
@@ -106,13 +119,16 @@ int main(int argc, char* argv[]) {
         drawSpeedControl(renderer, &speed_control, TIME_STEP);
 
         // draw the stats info box
-        drawStatsBox(renderer, body1, body2);
+        drawStatsBox(renderer, global_bodies[0], global_bodies[1]);
 
         // present the renderer to the screen
         SDL_RenderPresent(renderer);
     }
 
     // clean up
+    free(global_bodies);
+    global_bodies = NULL;
+    num_bodies = 0;
     if (g_font) TTF_CloseFont(g_font);
     TTF_Quit();
     SDL_DestroyWindow(window);

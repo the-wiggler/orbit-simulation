@@ -16,7 +16,9 @@ extern const int WINDOW_SIZE_Y;
 extern const int ORIGIN_X;
 extern const int ORIGIN_Y;
 extern const double METERS_PER_PIXEL;
+extern const int FONT_SIZE;
 extern TTF_Font* g_font;
+
 
 typedef struct {
     double mass;
