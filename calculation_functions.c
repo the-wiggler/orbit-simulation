@@ -72,3 +72,5 @@ void addOrbitalBody(body_properties_t** gb, int* num_bodies, double mass, double
 }
 
 // function to remove a body from the system
+
+// calculate the optimum velocity for an object to orbit a given body based on the orbit radius
