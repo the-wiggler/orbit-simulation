@@ -38,9 +38,9 @@ void updateMotion(body_properties_t *b, double dt) {
 }
 
 // transforms spacial coordinates (for example, in meters) to pixel coordinates
-void transformCoordinates(body_properties_t *b) {
-    b->pixel_coordinates_x = ORIGIN_X + (int)(b->pos_x / meters_per_pixel);
-    b->pixel_coordinates_y = ORIGIN_Y - (int)(b->pos_y / meters_per_pixel); // this is negative because the SDL origin is in the top left, so positive y is 'down'
+void transformCoordinates(body_properties_t *b, window_params_t wp) {
+    b->pixel_coordinates_x = wp.screen_origin_x + (int)(b->pos_x / wp.meters_per_pixel);
+    b->pixel_coordinates_y = wp.screen_origin_y - (int)(b->pos_y / wp.meters_per_pixel); // this is negative because the SDL origin is in the top left, so positive y is 'down'
 }
 
 // draw a circle in SDL
@@ -120,8 +120,8 @@ void drawScaleBar(SDL_Renderer* renderer, double meters_per_pixel, int window_wi
 
 
 // calculates the size (in pixels) that the planet should appear on the screen based on its mass
-int calculateVisualRadius(body_properties_t body) {
-    int r = (int)(body.radius / meters_per_pixel);
+int calculateVisualRadius(body_properties_t body, window_params_t wp) {
+    int r = (int)(body.radius / wp.meters_per_pixel);
     return r;
 }
 
@@ -153,7 +153,7 @@ void drawSpeedControl(SDL_Renderer* renderer, speed_control_t* control, double m
 }
 
 // the event handling code... checks if events are happening for input and does a task based on that input
-void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control_t* speed_control, double* TIME_STEP, double* meters_per_pixel, bool* sim_running) {
+void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control_t* speed_control, window_params_t* wp, bool* sim_running) {
     while (SDL_PollEvent(event)) {
         // check if x button is pressed to quit
         if (event->type == SDL_EVENT_QUIT) {
@@ -170,16 +170,16 @@ void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control
                 speed_control->width, speed_control->height)) {
                 
                 if (event->wheel.y > 0) {
-                    *TIME_STEP *= 1.05;
+                    wp->time_step *= 1.05;
                 } else if (event->wheel.y < 0) {
-                    *TIME_STEP /= 1.05;
+                    wp->time_step /= 1.05;
                 }
             }
             else {
                 if (event->wheel.y > 0) {
-                    *meters_per_pixel *= 1.05;
+                    wp->meters_per_pixel *= 1.05;
                 } else if (event->wheel.y < 0) {
-                    *meters_per_pixel /= 1.05;
+                    wp->meters_per_pixel /= 1.05;
                 }
             }
         }
@@ -199,7 +199,7 @@ void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control
 }
 
 // the stats box that shows stats yay
-void drawStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bodies, double sim_time) {
+void drawStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bodies, double sim_time, window_params_t wp) {
     // all calculations for things to go inside the box:
     for (int i = 0; i < num_bodies; i++) {
         char vel_text[32];
@@ -224,29 +224,28 @@ void drawStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bod
     else {
         snprintf(time, sizeof(time), "Sim time: %.1f days", sim_time/86400); // sim time in days
     }
-    SDL_WriteText(renderer, g_font, time, WINDOW_SIZE_X - (WINDOW_SIZE_X * 0.2), 15, text_color);
+    SDL_WriteText(renderer, g_font, time, wp.window_size_x - (wp.window_size_x * 0.2), 15, text_color);
 }
 
 
 // function to add a new body to the system
-void addOrbitalBody(double mass, double x_pos, double y_pos, double x_vel, double y_vel) {
-    extern int num_bodies;
+void addOrbitalBody(body_properties_t** gb, int* num_bodies, double mass, double x_pos, double y_pos, double x_vel, double y_vel) {
 
     // reallocate memory for the new body
-    global_bodies  = (body_properties_t *)realloc(global_bodies, (num_bodies + 1) * sizeof(body_properties_t));
+    *gb = (body_properties_t *)realloc(*gb, (*num_bodies + 1) * sizeof(body_properties_t));
 
     // initialize the new body at index num_bodies
-    global_bodies[num_bodies].mass = mass;
-    global_bodies[num_bodies].pos_x = x_pos;
-    global_bodies[num_bodies].pos_y = y_pos;
-    global_bodies[num_bodies].vel_x = x_vel;
-    global_bodies[num_bodies].vel_y = y_vel;
+    (*gb)[*num_bodies].mass = mass;
+    (*gb)[*num_bodies].pos_x = x_pos;
+    (*gb)[*num_bodies].pos_y = y_pos;
+    (*gb)[*num_bodies].vel_x = x_vel;
+    (*gb)[*num_bodies].vel_y = y_vel;
     
-    // calculate the radius based on mass (kind of a random estimate)
-    global_bodies[num_bodies].radius = pow(mass, 0.279f);
+    // calculate the radius based on mass
+    (*gb)[*num_bodies].radius = pow(mass, 0.279f);
 
-    // add one count to the body
-    num_bodies++;
+    // increment the body count
+    (*num_bodies)++;
 }
 
 // function to remove a body from the system

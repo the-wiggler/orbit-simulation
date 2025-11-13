@@ -8,7 +8,8 @@
         "atomic": "c",
         "format": "c",
         "istream": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "string.h": "c"
     },
     "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe"
 }

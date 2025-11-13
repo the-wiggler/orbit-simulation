@@ -12,12 +12,6 @@
 
 
 extern const double G;
-extern const int WINDOW_SIZE_X;
-extern const int WINDOW_SIZE_Y;
-extern const int ORIGIN_X;
-extern const int ORIGIN_Y;
-extern double meters_per_pixel;
-extern const int FONT_SIZE;
 extern TTF_Font* g_font;
 
 typedef struct {
@@ -38,8 +32,14 @@ typedef struct {
     int pixel_coordinates_y;
 } body_properties_t;
 
-extern body_properties_t *global_bodies;
-extern int num_bodies;
+typedef struct {
+    double time_step;
+    double speed_multiplier;
+    int window_size_x, window_size_y;
+    int screen_origin_x, screen_origin_y;
+    double meters_per_pixel;
+    int font_size;
+} window_params_t;
 
 typedef struct {
     int x, y, width, height;
@@ -48,18 +48,18 @@ typedef struct {
 
 void calculateForce(body_properties_t *b, body_properties_t b2);
 void updateMotion(body_properties_t *b, double dt);
-void transformCoordinates(body_properties_t *b);
+void transformCoordinates(body_properties_t *b, window_params_t window_params);
 void SDL_RenderFillCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius);
 void drawScaleBar(SDL_Renderer* renderer, double meters_per_pixel, int window_width, int window_height);
-int calculateVisualRadius(body_properties_t body);
+int calculateVisualRadius(body_properties_t body, window_params_t wp);
 void SDL_WriteText(SDL_Renderer* renderer, TTF_Font* font, const char* text, float x, float y, SDL_Color color);
 
 bool isMouseInRect(int mouse_x, int mouse_y, int rect_x, int rect_y, int rect_w, int rect_h);
 void drawSpeedControl(SDL_Renderer* renderer, speed_control_t* control, double multiplier);
-void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control_t* speed_control, double* TIME_STEP, double* meters_per_pixel, bool* sim_running);
+void runEventCheck(SDL_Event* event, bool* loop_running_condition, speed_control_t* speed_control, window_params_t* wp, bool* sim_running);
 
-void drawStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bodies, double sim_time);
+void drawStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bodies, double sim_time, window_params_t wp);
 
-void addOrbitalBody(double mass, double x_pos, double y_pos, double x_vel, double y_vel);
+void addOrbitalBody(body_properties_t** gb, int* num_bodies, double mass, double x_pos, double y_pos, double x_vel, double y_vel);
 
 #endif

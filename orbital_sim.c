@@ -12,49 +12,50 @@
 
 // NOTE: ALL CALCULATIONS SHOULD BE DONE IN BASE SI UNITS
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// CONSTANTS AND GLOBAL VARIABLES
-////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////// simulation constants:
 // universal gravitation constant
 const double G = 6.67430E-11;
-
-double TIME_STEP                = 1; // amount of time in seconds each step in the simulation should be
-                                        // i.e. each new updated position shown is after x seconds
-                                        // this value can be changed to adjust the speed/accuracy of the simulation
-speed_control_t speed_control   = {10, 10, 150, 40, false};
-double speed_multiplier = 1.0; // multiplier for TIME_STEP
-
-// SDL window sizing numbers
-const int WINDOW_SIZE_X         = 1500;
-const int WINDOW_SIZE_Y         = 1500;
-const int ORIGIN_X              = WINDOW_SIZE_X / 2;
-const int ORIGIN_Y              = WINDOW_SIZE_Y / 2;
-double meters_per_pixel         = 100000; // 1m in space will equal x number of pixels on screen
-const int FONT_SIZE             = WINDOW_SIZE_Y / (WINDOW_SIZE_X * 0.05);
-
 TTF_Font* g_font = NULL;
-SDL_Color white_text = {255, 255, 255, 255};
-
-// holds the information on the bodies
-int num_bodies = 0;
-body_properties_t* global_bodies = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]) {
+    ////////////////////////////////////////////////////////
+    // sim variables                                      //
+    ////////////////////////////////////////////////////////
+    window_params_t window_params = {0};
+
+    window_params.time_step = 1; // amount of time in seconds each step in the simulation should be
+                                // i.e. each new updated position shown is after x seconds
+                                // this value can be changed to adjust the speed/accuracy of the simulation
+    window_params.speed_multiplier = 1.0; // multiplier for TIME_STEP
+    // SDL window sizing numbers
+    window_params.window_size_x = 1000;
+    window_params.window_size_y = 1000;
+    window_params.screen_origin_x = window_params.window_size_x / 2;
+    window_params.screen_origin_y = window_params.window_size_y / 2;
+    window_params.meters_per_pixel = 100000;
+    window_params.font_size = window_params.window_size_x / (window_params.window_size_x * 0.05);
+
+    speed_control_t speed_control   = {10, 10, 150, 40, false};
+
+    SDL_Color white_text = {255, 255, 255, 255};
+
+    // holds the information on the bodies
+    int num_bodies = 0;
+    body_properties_t* global_bodies = NULL;
+
     // initialize SDL3
     SDL_Init(SDL_INIT_VIDEO);
     // create an SDL window
-    SDL_Window* window = SDL_CreateWindow("Orbit Simulation", WINDOW_SIZE_X, WINDOW_SIZE_Y, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("Orbit Simulation", window_params.window_size_x, window_params.window_size_y, SDL_WINDOW_RESIZABLE);
     // create an SDL renderer and clear the window to create a blank canvas
     SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     // SDL ttf font stuff
     TTF_Init();
-    g_font = TTF_OpenFont("CascadiaCode.ttf", FONT_SIZE);
+    g_font = TTF_OpenFont("CascadiaCode.ttf", window_params.font_size);
 
     // set to false to stop the sim program
     bool window_open = true;
@@ -73,15 +74,15 @@ int main(int argc, char* argv[]) {
     double europaRadius = 6.709e8;   // Europa's orbital radius
     double europaVel = 13740.0;  // m/s
     
-    addOrbitalBody(jupiterMass, 0.0, 0.0, 0.0, 0.0);
-    addOrbitalBody(ioMass, ioRadius, 0.0, 0.0, ioVel);
-    addOrbitalBody(europaMass, 0.0, europaRadius, -europaVel, 0.0);
-    addOrbitalBody(1e25, 1e8, 1e8, 27334, 0);
+    addOrbitalBody(&global_bodies, &num_bodies, jupiterMass, 0.0, 0.0, 0.0, 0.0);
+    addOrbitalBody(&global_bodies, &num_bodies, ioMass, ioRadius, 0.0, 0.0, ioVel);
+    addOrbitalBody(&global_bodies, &num_bodies, europaMass, 0.0, europaRadius, -europaVel, 0.0);
+    addOrbitalBody(&global_bodies, &num_bodies, 1e25, 1e8, 1e8, 27334, 0);
 
     while (window_open) {
         // checks inputs into the window
         SDL_Event event;
-        runEventCheck(&event, &window_open, &speed_control, &TIME_STEP, &meters_per_pixel, &sim_running);
+        runEventCheck(&event, &window_open, &speed_control, &window_params, &sim_running);
 
         // clears previous frame from the screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -109,12 +110,12 @@ int main(int argc, char* argv[]) {
                 // update the motion for each body and draw
                 for (int i = 0; i < num_bodies; i++) {
                     // updates the kinematic properties of each body (velocity, accelertion, position, etc)
-                    updateMotion(&global_bodies[i], TIME_STEP);
+                    updateMotion(&global_bodies[i], window_params.time_step);
                     // transform real-space coordinate to pixel coordinates on screen (scaling)
-                    transformCoordinates(&global_bodies[i]);
+                    transformCoordinates(&global_bodies[i], window_params);
                 }
             }
-            sim_time += TIME_STEP;
+            sim_time += window_params.time_step;
         }
 
         // render the bodies
@@ -122,17 +123,17 @@ int main(int argc, char* argv[]) {
             // draw bodies
             SDL_RenderFillCircle(renderer, global_bodies[i].pixel_coordinates_x,
                             global_bodies[i].pixel_coordinates_y, 
-                            calculateVisualRadius(global_bodies[i]));
+                            calculateVisualRadius(global_bodies[i], window_params));
         }
 
         // draw scale reference bar
-        drawScaleBar(renderer, meters_per_pixel, WINDOW_SIZE_X, WINDOW_SIZE_Y);
+        drawScaleBar(renderer, window_params.meters_per_pixel, window_params.window_size_x, window_params.window_size_y);
 
         // draw speed control box
-        drawSpeedControl(renderer, &speed_control, TIME_STEP);
+        drawSpeedControl(renderer, &speed_control, window_params.time_step);
 
         // draw stats box
-        if (global_bodies != NULL) drawStatsBox(renderer, global_bodies, num_bodies, sim_time);
+        if (global_bodies != NULL) drawStatsBox(renderer, global_bodies, num_bodies, sim_time, window_params);
 
         // help text at the bottom
         SDL_WriteText(renderer, g_font, "Press space to pause/resume", 500, 20, white_text);
