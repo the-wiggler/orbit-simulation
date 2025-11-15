@@ -53,6 +53,30 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/planet_data.csv
 if(WIN32)
     # Windows-specific settings
     target_link_libraries(orbital_sim PRIVATE m)
+
+    # Copy SDL3 DLLs and all dependencies to build directory for distribution
+    add_custom_command(TARGET orbital_sim POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying SDL3 DLLs..."
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3::SDL3>
+            $<TARGET_FILE_DIR:orbital_sim>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3_ttf::SDL3_ttf>
+            $<TARGET_FILE_DIR:orbital_sim>
+        COMMENT "Copying SDL3 DLLs to build directory"
+    )
+
+    # Copy all MinGW runtime dependencies
+    add_custom_command(TARGET orbital_sim POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying DLL dependencies..."
+        COMMAND bash -c "ldd $<TARGET_FILE:orbital_sim> | grep mingw64 | cut -d' ' -f3 | xargs -I {} cp -n -v {} $<TARGET_FILE_DIR:orbital_sim> 2>/dev/null || true"
+        COMMENT "Copying MinGW and library dependencies"
+    )
+
+    # Strip debug symbols for smaller file size in Release builds
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_link_options(orbital_sim PRIVATE -s)
+    endif()
 elseif(UNIX)
     # Unix/Linux-specific settings
     target_link_libraries(orbital_sim PRIVATE m)
