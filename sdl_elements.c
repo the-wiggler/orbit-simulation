@@ -120,7 +120,7 @@ void drawStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bod
     // all calculations for things to go inside the box:
     for (int i = 0; i < num_bodies; i++) {
         char vel_text[32];
-        snprintf(vel_text, sizeof(vel_text), "Vel of Body %d: %.1f", i, bodies[i].vel);
+        snprintf(vel_text, sizeof(vel_text), "Vel of %s: %.1f", bodies[i].name, bodies[i].vel);
 
         // render text
         SDL_WriteText(renderer, g_font, vel_text, margin_x, start_y + i * line_height, text_color);

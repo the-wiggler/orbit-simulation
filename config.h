@@ -3,7 +3,6 @@
 
 typedef struct {
     double time_step;
-    double speed_multiplier;
     int window_size_x, window_size_y;
     int screen_origin_x, screen_origin_y;
     double meters_per_pixel;
@@ -15,6 +14,7 @@ typedef struct {
 } window_params_t;
 
 typedef struct {
+    char* name;
     double mass;
     int radius; // this is an approximate value just for visual purposes
     int visual_radius;

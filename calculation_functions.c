@@ -48,10 +48,14 @@ int calculateVisualRadius(body_properties_t body, window_params_t wp) {
 }
 
 // function to add a new body to the system
-void addOrbitalBody(body_properties_t** gb, int* num_bodies, double mass, double x_pos, double y_pos, double x_vel, double y_vel) {
+void addOrbitalBody(body_properties_t** gb, int* num_bodies, char* name, double mass, double x_pos, double y_pos, double x_vel, double y_vel) {
 
     // reallocate memory for the new body
     *gb = (body_properties_t *)realloc(*gb, (*num_bodies + 1) * sizeof(body_properties_t));
+
+    // allocate memory for the name and copy it
+    (*gb)[*num_bodies].name = (char*)malloc(strlen(name) + 1);
+    strcpy((*gb)[*num_bodies].name, name);
 
     // initialize the new body at index num_bodies
     (*gb)[*num_bodies].mass = mass;
@@ -93,10 +97,6 @@ void createCSV(char* FILENAME) {
 
 void readCSV(char* FILENAME, body_properties_t** gb, int* num_bodies) {
     FILE *fp = fopen(FILENAME, "r");
-    if (fp == NULL) {
-        printf("Error: Could not open file %s\n", FILENAME);
-        return;
-    }
 
     char buffer[1024];
     int line_count = 0;
@@ -115,23 +115,16 @@ void readCSV(char* FILENAME, body_properties_t** gb, int* num_bodies) {
         double mass, pos_x, pos_y, vel_x, vel_y;
 
         // use sscanf to parse the comma-separated values
-        int fields_read = sscanf(buffer, "%[^,],%lf,%lf,%lf,%lf,%lf",
+        int fields_read = sscanf(buffer, "%255[^,],%lf,%lf,%lf,%lf,%lf",
                                  planet_name, &mass, &pos_x, &pos_y, &vel_x, &vel_y);
 
         // check if all fields were successfully read
         if (fields_read == 6) {
             // add the orbital body to the system
-            addOrbitalBody(gb, num_bodies, mass, pos_x, pos_y, vel_x, vel_y);
-            printf("Loaded body: %s (mass=%.2e, pos=(%.2e,%.2e), vel=(%.2e,%.2e))\n",
-                   planet_name, mass, pos_x, pos_y, vel_x, vel_y);
-        } else {
-            printf("Warning: Skipping malformed line %d (only %d fields read)\n",
-                   line_count, fields_read);
+            addOrbitalBody(gb, num_bodies, planet_name, mass, pos_x, pos_y, vel_x, vel_y);
         }
     }
-
     fclose(fp);
-    printf("CSV loading complete. Total bodies loaded: %d\n", *num_bodies);
 }
 
 

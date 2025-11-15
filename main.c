@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
     wp.time_step = 1; // amount of time in seconds each step in the simulation should be
                                 // i.e. each new updated position shown is after x seconds
                                 // this value can be changed to adjust the speed/accuracy of the simulation
-    wp.speed_multiplier = 1.0; // multiplier for TIME_STEP
     // SDL window sizing numbers
     wp.window_size_x = 1000;
     wp.window_size_y = 1000;
