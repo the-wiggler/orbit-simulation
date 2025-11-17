@@ -16,7 +16,9 @@ extern TTF_Font* g_font;
 void calculateForce(body_properties_t* b, body_properties_t b2);
 void updateMotion(body_properties_t* b, double dt);
 void transformCoordinates(body_properties_t* b, window_params_t window_params);
-int calculateVisualRadius(body_properties_t body, window_params_t wp);
+void calculateKineticEnergy(body_properties_t* b);
+double calculatePotentialEnergy(body_properties_t b, const char* target_name, body_properties_t* gb, int num_bodies);
+int calculateVisualRadius(body_properties_t* body, window_params_t wp);
 void addOrbitalBody(body_properties_t** gb, int* num_bodies, char* name, double mass, double x_pos, double y_pos, double x_vel, double y_vel);
 void resetSim(double* sim_time, body_properties_t** gb, int* num_bodies);
 

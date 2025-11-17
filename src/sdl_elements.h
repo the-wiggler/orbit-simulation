@@ -11,6 +11,7 @@
 #include "config.h"
 
 extern TTF_Font* g_font;
+extern TTF_Font* g_font_small;
 
 typedef struct {
     int x, y, width, height;

@@ -15,7 +15,8 @@
         "config.h": "c",
         "math.h": "c",
         "stdbool.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "unistd.h": "c"
     },
 }
 

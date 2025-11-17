@@ -41,9 +41,48 @@ void transformCoordinates(body_properties_t *b, window_params_t wp) {
     b->pixel_coordinates_y = wp.screen_origin_y - (int)(b->pos_y / wp.meters_per_pixel); // this is negative because the SDL origin is in the top left, so positive y is 'down'
 }
 
+// calculates the kinetic energy of a specific body
+void calculateKineticEnergy(body_properties_t *b) {
+    // calculate kinetic energy (0.5mv^2)
+    b->kinetic_energy = 0.5f * b->mass * b->vel * b->vel;
+}
+
+// determine the potential energy of a body relative to another target body
+double calculatePotentialEnergy(body_properties_t b, const char* target_name, body_properties_t* gb, int num_bodies) {
+    // search for the target body by name
+    body_properties_t* target_body = NULL;
+    for (int i = 0; i < num_bodies; i++) {
+        if (strcmp(gb[i].name, target_name) == 0) {
+            target_body = &gb[i];
+            break;
+        }
+    }
+
+    // if target body not found, return 0
+    if (target_body == NULL) {
+        return 0.0;
+    }
+
+    // calculate distance between the bodies
+    double delta_pos_x = target_body->pos_x - b.pos_x;
+    double delta_pos_y = target_body->pos_y - b.pos_y;
+    double r = sqrt(delta_pos_x * delta_pos_x + delta_pos_y * delta_pos_y);
+
+    // avoid division by zero
+    if (r == 0.0) {
+        return 0.0;
+    }
+
+    // calculate gravitational potential energy (U = -GMm/r)
+    double potential_energy = -(G * b.mass * target_body->mass) / r;
+
+    return potential_energy;
+}
+
 // calculates the size (in pixels) that the planet should appear on the screen based on its mass
-int calculateVisualRadius(body_properties_t body, window_params_t wp) {
-    int r = (int)(body.radius / wp.meters_per_pixel);
+int calculateVisualRadius(body_properties_t* body, window_params_t wp) {
+    int r = (int)(body->radius / wp.meters_per_pixel);
+    body->pixel_radius = r;
     return r;
 }
 
@@ -100,6 +139,19 @@ void createCSV(char* FILENAME) {
 
 void readCSV(char* FILENAME, body_properties_t** gb, int* num_bodies) {
     FILE *fp = fopen(FILENAME, "r");
+
+    // check if file was opened successfully
+    if (fp == NULL) {
+        char error_message[512];
+        snprintf(error_message, sizeof(error_message), "Failed to open file: %s\n\nMake sure the file exists and is accessible.", FILENAME);
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR,
+            "CSV Load Error",
+            error_message,
+            NULL
+        );
+        return;
+    }
 
     char buffer[1024];
     int line_count = 0;

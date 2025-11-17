@@ -95,7 +95,8 @@ void renderOrbitBodies(SDL_Renderer* renderer, body_properties_t* gb, int num_bo
         // draw bodies
         SDL_RenderFillCircle(renderer, gb[i].pixel_coordinates_x,
                         gb[i].pixel_coordinates_y, 
-                        calculateVisualRadius(gb[i], wp));
+                        calculateVisualRadius(&gb[i], wp));
+        SDL_WriteText(renderer, g_font_small, gb[i].name, gb[i].pixel_coordinates_x - gb[i].pixel_radius, gb[i].pixel_coordinates_y + gb[i].pixel_radius, TEXT_COLOR);
     }
 }
 
@@ -204,7 +205,7 @@ void renderUIButtons(SDL_Renderer* renderer, button_storage_t* buttons, window_p
     renderButton(renderer, &buttons->sc_button, speed_text, *wp);
 
     // csv loading button
-    char csv_text[6] = "csv";
+    char csv_text[16] = "Load CSV";
     renderButton(renderer, &buttons->csv_load_button, csv_text, *wp);
 
     // add orbital body button

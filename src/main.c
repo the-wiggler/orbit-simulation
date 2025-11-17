@@ -20,6 +20,7 @@
 char* FILENAME = "planet_data.csv";
 const double G = 6.67430E-11;
 TTF_Font* g_font = NULL;
+TTF_Font* g_font_small = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN
@@ -72,6 +73,7 @@ int main(int argc, char* argv[]) {
     // SDL ttf font stuff
     TTF_Init();
     g_font = TTF_OpenFont("CascadiaCode.ttf", wp.font_size);
+    g_font_small = TTF_OpenFont("CascadiaCode.ttf", wp.window_size_x / 90);
 
     ////////////////////////////////////////////////////////
     // simulation loop                                    //
