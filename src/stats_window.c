@@ -1,8 +1,13 @@
 #include "stats_window.h"
 #include "config.h"
 #include "sdl_elements.h"
+#include <stdio.h>
 
 extern SDL_Color TEXT_COLOR;
+
+void renderGraph(SDL_Renderer* renderer, body_properties_t* bodies, int num_bodies, window_params_t wp) {
+
+}
 
 // the stats box that shows stats yay
 void renderStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_bodies, window_params_t wp) {
@@ -18,6 +23,7 @@ void renderStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_b
             // render text
             SDL_WriteText(renderer, g_font, vel_text, margin_x, start_y + i * line_height, TEXT_COLOR);
         }
+        renderGraph(renderer, bodies, num_bodies, wp);
     }
 }
 
@@ -31,7 +37,7 @@ void renderStatsBox(SDL_Renderer* renderer, body_properties_t* bodies, int num_b
 bool statsWindowInit(stats_window_t* stats) {
     if (!stats) return false;
 
-    stats->window = SDL_CreateWindow("Stats Window", 400, 300, 0);
+    stats->window = SDL_CreateWindow("Stats Window", 400, 300, SDL_WINDOW_RESIZABLE);
     if (!stats->window) {
         SDL_Log("Failed to create stats window: %s", SDL_GetError());
         return false;

@@ -288,7 +288,7 @@ void runCalculations(body_properties_t** gb, window_params_t* wp, int num_bodies
 
             // log orbital energy data every iteration
             //exportOrbitalEnergyData("orbital_energy.csv", *gb, num_bodies, wp->sim_time);
+            wp->sim_time += wp->time_step;
         }
-        wp->sim_time += wp->time_step;
     }
 }

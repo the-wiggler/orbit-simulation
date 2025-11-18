@@ -14,6 +14,7 @@ typedef struct {
     bool window_open;
     bool sim_running;
     double sim_time;
+    SDL_WindowID main_window_ID;
 } window_params_t;
 
 typedef struct {

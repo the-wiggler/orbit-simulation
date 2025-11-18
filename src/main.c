@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
     // create an SDL window
     SDL_Window* window = SDL_CreateWindow("Orbit Simulation", wp.window_size_x, wp.window_size_y, SDL_WINDOW_RESIZABLE);
+    wp.main_window_ID = SDL_GetWindowID(window);
     // create an SDL renderer and clear the window to create a blank canvas
     SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

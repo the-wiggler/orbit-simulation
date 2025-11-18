@@ -316,7 +316,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
     while (SDL_PollEvent(event)) {
         // if dialog is active, handle text input events
         if (dialog->active) {
-            if (event->type == SDL_EVENT_TEXT_INPUT) {
+            if (event->type == SDL_EVENT_TEXT_INPUT && event->window.windowID == wp->main_window_ID) {
                 // append character to input buffer
                 size_t len = strlen(dialog->input_buffer);
                 if (len < sizeof(dialog->input_buffer) - 1) {
@@ -328,7 +328,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
                     // remove last character
                     dialog->input_buffer[strlen(dialog->input_buffer) - 1] = '\0';
                 }
-                else if (event->key.key == SDLK_RETURN || event->key.key == SDLK_KP_ENTER) {
+                else if ((event->key.key == SDLK_RETURN || event->key.key == SDLK_KP_ENTER) && event->window.windowID == wp->main_window_ID) {
                     // process current input and move to next state
                     switch (dialog->state) {
                         case INPUT_NAME:
@@ -421,7 +421,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
             wp->window_open = false;
         }
         // check if mouse is moving to update hover state
-        else if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        else if (event->type == SDL_EVENT_MOUSE_MOTION && event->window.windowID == wp->main_window_ID) {
             int mouse_x = (int)event->motion.x;
             int mouse_y = (int)event->motion.y;
 
@@ -443,7 +443,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
                 buttons->show_stats_button.width, buttons->show_stats_button.height);
         }
         // check if mouse button is clicked
-        else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->window.windowID == wp->main_window_ID) {
             if (buttons->csv_load_button.is_hovered) {
                 // reads the CSV file associated with loading orbital bodies
                 readCSV("planet_data.csv", gb, num_bodies);
@@ -455,14 +455,15 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
                 dialog->input_buffer[0] = '\0';
                 SDL_StartTextInput(SDL_GetKeyboardFocus());
             }
-            else if(buttons->show_stats_button.is_hovered) {
+            else if(buttons->show_stats_button.is_hovered && !(stats_window->is_shown)) {
                 if (statsWindowInit(stats_window)) {
                     stats_window->is_shown = true;
                 }
             }
+            else if(buttons->show_stats_button.is_hovered && stats_window->is_shown) displayError("Warning", "The statistics window is already open!");
         }
         // check if scroll
-        else if (event->type == SDL_EVENT_MOUSE_WHEEL) {
+        else if (event->type == SDL_EVENT_MOUSE_WHEEL && event->window.windowID == wp->main_window_ID) {
             int mouse_x = (int)event->wheel.mouse_x;
             int mouse_y = (int)event->wheel.mouse_y;
 
@@ -486,7 +487,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
             }
         }
         // check if keyboard key is pressed
-        else if (event->type == SDL_EVENT_KEY_DOWN) {
+        else if (event->type == SDL_EVENT_KEY_DOWN && event->window.windowID == wp->main_window_ID) {
             if(event->key.key == SDLK_SPACE) {
                 if (wp->sim_running == false) {
                     wp->sim_running = true;
@@ -499,8 +500,9 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
                 resetSim(&wp->sim_time, gb, num_bodies);
             }
         }
-        // check if window is resized
-        else if (event->type == SDL_EVENT_WINDOW_RESIZED) {
+        // check if window is resized (only for main window)
+        else if (event->type == SDL_EVENT_WINDOW_RESIZED &&
+                 event->window.windowID == wp->main_window_ID) {
             wp->window_size_x = event->window.data1;
             wp->window_size_y = event->window.data2;
             wp->screen_origin_x = wp->window_size_x / 2;
