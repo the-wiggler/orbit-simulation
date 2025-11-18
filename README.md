@@ -31,7 +31,6 @@ This program simulates gravitational interactions between celestial bodies using
 
 ### Controls
 - **Space**: Pause/resume simulation
-- **Left Click**: Add a new orbital body at cursor position
 - **R**: Reset simulation to initial state
 - **Speed Control Box**: Hoover over and scroll to adjust simulation speed
 
