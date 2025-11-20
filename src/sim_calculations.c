@@ -6,10 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ORBITAL BODY CALCULATIONS
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // at the end of each sim loop, this function should be run to calculate the changes in
 // the force values based on other parameters. for example, using F to find a based on m.
 // b is the body that has the force applied to it, whilst b2 is the body applying force to b
-void calculateForce(body_properties_t *b, body_properties_t b2) {
+void body_calculateGravForce(body_properties_t *b, body_properties_t b2) {
     // calculate the distance between the two bodies
     double delta_pos_x = b2.pos_x - b->pos_x;
     double delta_pos_y = b2.pos_y - b->pos_y;
@@ -23,7 +27,7 @@ void calculateForce(body_properties_t *b, body_properties_t b2) {
 }
 
 // this calculates the changes of velocity and position based on the force values from before
-void updateMotion(body_properties_t *b, double dt) {
+void body_updateMotion(body_properties_t *b, double dt) {
     // calculate the acceleration from the force on the object
     b->acc_x = b->force_x / b->mass;
     b->acc_y = b->force_y / b->mass;
@@ -39,19 +43,19 @@ void updateMotion(body_properties_t *b, double dt) {
 }
 
 // transforms spacial coordinates (for example, in meters) to pixel coordinates
-void transformCoordinates(body_properties_t *b, window_params_t wp) {
+void body_transformCoordinates(body_properties_t *b, window_params_t wp) {
     b->pixel_coordinates_x = wp.screen_origin_x + (int)(b->pos_x / wp.meters_per_pixel);
     b->pixel_coordinates_y = wp.screen_origin_y - (int)(b->pos_y / wp.meters_per_pixel); // this is negative because the SDL origin is in the top left, so positive y is 'down'
 }
 
 // calculates the kinetic energy of a specific body
-void calculateKineticEnergy(body_properties_t *b) {
+void body_calculateKineticEnergy(body_properties_t *b) {
     // calculate kinetic energy (0.5mv^2)
     b->kinetic_energy = 0.5f * b->mass * b->vel * b->vel;
 }
 
 // determine the potential energy of a body relative to another target body
-double calculatePotentialEnergy(body_properties_t b, const char* target_name, body_properties_t* gb, int num_bodies) {
+double body_calculatePotentialEnergy(body_properties_t b, const char* target_name, body_properties_t* gb, int num_bodies) {
     // search for the target body by name
     body_properties_t* target_body = NULL;
     for (int i = 0; i < num_bodies; i++) {
@@ -83,14 +87,14 @@ double calculatePotentialEnergy(body_properties_t b, const char* target_name, bo
 }
 
 // calculates the size (in pixels) that the planet should appear on the screen based on its mass
-int calculateVisualRadius(body_properties_t* body, window_params_t wp) {
+int body_calculateVisualRadius(body_properties_t* body, window_params_t wp) {
     int r = (int)(body->radius / wp.meters_per_pixel);
     body->pixel_radius = r;
     return r;
 }
 
 // function to add a new body to the system
-void addOrbitalBody(body_properties_t** gb, int* num_bodies, char* name, double mass, double x_pos, double y_pos, double x_vel, double y_vel) {
+void body_addOrbitalBody(body_properties_t** gb, int* num_bodies, char* name, double mass, double x_pos, double y_pos, double x_vel, double y_vel) {
 
     // reallocate memory for the new body
     *gb = (body_properties_t *)realloc(*gb, (*num_bodies + 1) * sizeof(body_properties_t));
@@ -113,6 +117,52 @@ void addOrbitalBody(body_properties_t** gb, int* num_bodies, char* name, double 
     (*num_bodies)++;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// SPACECRAFT CALCULATIONS
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// calculates the force applied on a spacecraft by a specific body
+void craft_calculateGravForce(spacecraft_properties_t* s, body_properties_t b) {
+
+}
+
+// updates the force 
+void craft_applyThrust(spacecraft_properties_t* s) {
+
+}
+
+void craft_consumeFuel(spacecraft_properties_t* s) {
+
+}
+
+// updates the motion of the spacecraft based on the force currently applied to it
+void craft_updateMotion(spacecraft_properties_t* s, body_properties_t b) {
+
+}
+
+// adds a spacecraft to the spacecraft array
+void craft_addSpacecraft(spacecraft_properties_t** sc, int* num_craft, char* name,
+                        double x_pos, double y_pos, double x_vel, double y_vel) {
+    // reallocate memory for the new spacecraft
+    *sc = (body_properties_t *)realloc(*sc, (*num_craft + 1) * sizeof(body_properties_t));
+
+    // allocate memory for the name and copy it
+    (*sc)[*num_craft].name = (char*)malloc(strlen(name) + 1);
+    strcpy((*sc)[*num_craft].name, name);
+
+    // initialize the new craft at index num_craft
+    (*sc)[*num_craft].pos_x = x_pos;
+    (*sc)[*num_craft].pos_y = y_pos;
+    (*sc)[*num_craft].vel_x = x_vel;
+    (*sc)[*num_craft].vel_y = y_vel;
+
+    // increment the craft count
+    (*num_craft)++;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// LOGIC FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // reset the simulation by removing all bodies from the system
 void resetSim(double* sim_time, body_properties_t** gb, int* num_bodies) {
     // reset simulation time to 0
@@ -179,16 +229,16 @@ void readCSV(char* FILENAME, body_properties_t** gb, int* num_bodies) {
         // check if all fields were successfully read
         if (fields_read == 6) {
             // add the orbital body to the system
-            addOrbitalBody(gb, num_bodies, planet_name, mass, pos_x, pos_y, vel_x, vel_y);
+            body_addOrbitalBody(gb, num_bodies, planet_name, mass, pos_x, pos_y, vel_x, vel_y);
         }
     }
     fclose(fp);
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// MAIN CALCULATION LOOP
-////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// MAIN CALCULATION LOOP - THIS LOOP IS PLACED IN THE MAIN LOOP, AND DOES ALL NECESSARY CALCULATIONS //
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 void runCalculations(body_properties_t** gb, window_params_t* wp, int num_bodies) {
     if (wp->sim_running) {
         // calculate forces between all body pairs
@@ -198,7 +248,7 @@ void runCalculations(body_properties_t** gb, window_params_t* wp, int num_bodies
                 (*gb)[i].force_y = 0;
                 for (int j = 0; j < num_bodies; j++) {
                     if (i != j) {
-                        calculateForce(&(*gb)[i], (*gb)[j]);
+                        body_calculateGravForce(&(*gb)[i], (*gb)[j]);
                     }
                 }
             }
@@ -206,9 +256,9 @@ void runCalculations(body_properties_t** gb, window_params_t* wp, int num_bodies
             // update the motion for each body and draw
             for (int i = 0; i < num_bodies; i++) {
                 // updates the kinematic properties of each body (velocity, accelertion, position, etc)
-                updateMotion(&(*gb)[i], wp->time_step);
+                body_updateMotion(&(*gb)[i], wp->time_step);
                 // transform real-space coordinate to pixel coordinates on screen (scaling)
-                transformCoordinates(&(*gb)[i], *wp);
+                body_transformCoordinates(&(*gb)[i], *wp);
             }
             wp->sim_time += wp->time_step;
         }

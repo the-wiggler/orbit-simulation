@@ -10,6 +10,7 @@
 extern const double G;
 extern TTF_Font* g_font;
 
+// orbital body stuff
 void calculateForce(body_properties_t* b, body_properties_t b2);
 void updateMotion(body_properties_t* b, double dt);
 void transformCoordinates(body_properties_t* b, window_params_t window_params);
@@ -19,9 +20,15 @@ int calculateVisualRadius(body_properties_t* body, window_params_t wp);
 void addOrbitalBody(body_properties_t** gb, int* num_bodies, char* name, double mass, double x_pos, double y_pos, double x_vel, double y_vel);
 void resetSim(double* sim_time, body_properties_t** gb, int* num_bodies);
 
+// spacecraft body stuff
+void updateSpacecraft(spacecraft_properties_t* s, body_properties_t b);
+void applyThrust(spacecraft_properties_t* s);
+void consumeFuel(spacecraft_properties_t* s);
+void addSpacecraft(spacecraft_properties_t* s);
+
+
 void createCSV(char* FILENAME);
 void readCSV(char* FILENAME, body_properties_t** gb, int* num_bodies);
-void exportOrbitalEnergyData(char* FILENAME, body_properties_t* gb, int num_bodies, double sim_time);
 
 void runCalculations(body_properties_t** gb, window_params_t* wp, int num_bodies); // MAIN CALCULATION LOOP -- DOES ALL THE MATH
 

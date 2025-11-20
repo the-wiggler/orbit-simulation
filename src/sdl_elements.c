@@ -120,7 +120,7 @@ void renderOrbitBodies(SDL_Renderer* renderer, body_properties_t* gb, int num_bo
         // draw bodies
         SDL_RenderFillCircle(renderer, gb[i].pixel_coordinates_x,
                         gb[i].pixel_coordinates_y, 
-                        calculateVisualRadius(&gb[i], wp));
+                        body_calculateVisualRadius(&gb[i], wp));
         SDL_WriteText(renderer, g_font_small, gb[i].name, gb[i].pixel_coordinates_x - gb[i].pixel_radius, gb[i].pixel_coordinates_y + gb[i].pixel_radius, TEXT_COLOR);
     }
 }
@@ -411,7 +411,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
                             }
                             dialog->y_vel = y_vel;
                             // all parameters collected, add the body
-                            addOrbitalBody(gb, num_bodies, dialog->name, dialog->mass,
+                            body_addOrbitalBody(gb, num_bodies, dialog->name, dialog->mass,
                                      dialog->x_pos, dialog->y_pos, dialog->x_vel, dialog->y_vel);
                             // reset dialog
                             dialog->active = false;
