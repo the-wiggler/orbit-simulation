@@ -54,12 +54,17 @@ typedef struct {
     double heading;
     double dry_mass;
     double fuel_mass;
-    double total_mass;
+    double current_total_mass; // tracks the amount of mass in the ship at an instant
     double mass_flow_rate;
     double thrust;
     double specific_impulse;
     float throttle;
     bool engine_on;
+
+    double burn_start_time;   // simulation time to start burn (seconds)
+    double burn_duration;     // how long to burn
+    double burn_heading;      // direction to burn - rad
+    double burn_throttle;     // throttle setting for the burn - 0-1
 } spacecraft_properties_t;
 
 typedef struct {

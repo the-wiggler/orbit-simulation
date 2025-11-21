@@ -115,13 +115,25 @@ bool isMouseInRect(int mouse_x, int mouse_y, int rect_x, int rect_y, int rect_w,
             mouse_y >= rect_y && mouse_y <= rect_y + rect_h);
 }
 
-void renderOrbitBodies(SDL_Renderer* renderer, body_properties_t* gb, int num_bodies, window_params_t wp) {
+void body_renderOrbitBodies(SDL_Renderer* renderer, body_properties_t* gb, int num_bodies, window_params_t wp) {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     for (int i = 0; i < num_bodies; i++) {
         // draw bodies
         SDL_RenderFillCircle(renderer, gb[i].pixel_coordinates_x,
                         gb[i].pixel_coordinates_y, 
                         body_calculateVisualRadius(&gb[i], wp));
         SDL_WriteText(renderer, g_font_small, gb[i].name, gb[i].pixel_coordinates_x - gb[i].pixel_radius, gb[i].pixel_coordinates_y + gb[i].pixel_radius, TEXT_COLOR);
+    }
+}
+
+void craft_renderCrafts(SDL_Renderer* renderer, spacecraft_properties_t* sc, int num_craft, window_params_t wp) {
+    SDL_SetRenderDrawColor(renderer, 255, 100, 100, 255); // reddish color for spacecraft
+    for (int i = 0; i < num_craft; i++) {
+        if (sc[i].engine_on) SDL_SetRenderDrawColor(renderer, 255, 190, 190, 255);
+        // draw craft as a small filled circle
+        SDL_RenderFillCircle(renderer, sc[i].pixel_coordinates_x, sc[i].pixel_coordinates_y, 3);
+        // draw the name
+        SDL_WriteText(renderer, g_font_small, sc[i].name, sc[i].pixel_coordinates_x + 5, sc[i].pixel_coordinates_y + 5, TEXT_COLOR);
     }
 }
 

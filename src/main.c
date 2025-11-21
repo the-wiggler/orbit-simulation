@@ -18,6 +18,7 @@
 
 // universal gravitation constant
 char* FILENAME = "planet_data.csv";
+char* SPACECRAFT_FILENAME = "spacecraft_data.csv";
 const double G = 6.67430E-11;
 TTF_Font* g_font = NULL;
 TTF_Font* g_font_small = NULL;
@@ -64,6 +65,9 @@ int main(int argc, char* argv[]) {
     g_font = TTF_OpenFont("CascadiaCode.ttf", wp.font_size);
     g_font_small = TTF_OpenFont("CascadiaCode.ttf", (float)wp.window_size_x / 90);
 
+    // load spacecraft from CSV file
+    readSpacecraftCSV(SPACECRAFT_FILENAME, &sc, &num_craft);
+
     ////////////////////////////////////////////////////////
     // simulation loop                                    //
     ////////////////////////////////////////////////////////
@@ -77,16 +81,19 @@ int main(int argc, char* argv[]) {
         SDL_RenderClear(renderer);
 
         // color for drawing bodies
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         
         ////////////////////////////////////////////////////
         // START OF SIMULATION LOGIC                      //
         ////////////////////////////////////////////////////
         // IMPORTANT -- DOES ALL OF THE BODY CALCULATIONS:
-        runCalculations(&gb, &wp, num_bodies);
+        runCalculations(&gb, &sc, &wp, num_bodies, num_craft);
+
 
         // render the bodies
-        renderOrbitBodies(renderer, gb, num_bodies, wp);
+        body_renderOrbitBodies(renderer, gb, num_bodies, wp);
+
+        // render the spacecraft
+        craft_renderCrafts(renderer, sc, num_craft, wp);
 
         ////////////////////////////////////////////////////
         // UI ELEMENTS                                    //
@@ -116,9 +123,24 @@ int main(int argc, char* argv[]) {
     }
 
     // clean up
-    free(gb);
-    gb = NULL;
+    if (gb != NULL) {
+        for (int i = 0; i < num_bodies; i++) {
+            free(gb[i].name);
+        }
+        free(gb);
+        gb = NULL;
+    }
     num_bodies = 0;
+
+    if (sc != NULL) {
+        for (int i = 0; i < num_craft; i++) {
+            free(sc[i].name);
+        }
+        free(sc);
+        sc = NULL;
+    }
+    num_craft = 0;
+
     StatsWindow_destroy(&stats_window);
     if (g_font) TTF_CloseFont(g_font);
     if (g_font_small) TTF_CloseFont(g_font_small);
