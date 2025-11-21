@@ -479,6 +479,7 @@ void runEventCheck(SDL_Event* event, window_params_t* wp, body_properties_t** gb
             if (buttons->csv_load_button.is_hovered) {
                 // reads the CSV file associated with loading orbital bodies
                 readCSV("planet_data.csv", gb, num_bodies);
+                wp->sim_time = 0;
             }
             else if(buttons->add_body_button.is_hovered) {
                 // activate text input dialog
